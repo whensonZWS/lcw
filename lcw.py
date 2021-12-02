@@ -2,8 +2,7 @@ import configparser as cfp
 import base64
 import io
 
-map_name = 'C:/Users/whenson/Documents/Tencent Files/1156535822/FileRecv/srech.map'
-#map_name = 'D:/RA2/MO336/Maps/Custom/effect.map'
+map_name = ''
 f = cfp.ConfigParser(strict=False)
 f.optionxform=str
 f.read(map_name)
