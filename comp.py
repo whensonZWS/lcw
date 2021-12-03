@@ -20,6 +20,7 @@ def encode(src) -> bytearray:
 
     while p < size:
         # command 4?
+        
         if size-p > 64 and src[p] == src[p+64]:
             rle_max = min(size, p+0xffff)
             for rle_p in range(p,rle_max):
@@ -27,10 +28,11 @@ def encode(src) -> bytearray:
                     break
             run_len = rle_p - p
             if run_len >= 0x41:
+                #print('c4')
                 cmd_one = False
                 des.append(0xfe)
                 des.append(run_len & 0xff)
-                des.append(run_len >> 8)
+                des.append(run_len >> 8 & 0xff)
                 des.append(src[p])
                 p = rle_p
                 continue
@@ -62,33 +64,40 @@ def encode(src) -> bytearray:
         
         if block_size <= 2:
             # command 1
-            if cmd_one and src[cmd_one_p] < 0xBF:
-                cmd_one_p += 1
+            
+            if cmd_one and des[cmd_one_p] < 0xBF:
+                des[cmd_one_p] += 1
                 des.append(src[p])
                 p += 1
+                #print('c1add')
             else:
-                cmd_one_p = p
+                #print('c1')
+                cmd_one_p = len(des)
                 des.append(0x81)
                 des.append(src[p])
                 p += 1
                 cmd_one = True
         else:
-            rel_off = len(des) - off_sp
+            rel_off = p - off_sp
             # command 5
-            if block_size > 0xa or rel_off > 0xffff:
+            if block_size > 0xa or rel_off > 0xfff:
                 if block_size > 0x40:
+                    #print('c5')
                     des.append(0xff)
-                    des.append(run_len & 0xff)
-                    des.append(run_len >> 8)
+                    des.append(block_size & 0xff)
+                    des.append(block_size >> 8 & 0xff)
                 else:
+                    # command 3
+                    #print('c3')
                     des.append(block_size-3 | 0xc0)
 
                 offset = rel_off if rel else off_sp
             else:
                 # command 2
-                offset = rel_off << 8 | (16 * (block_size - 3) + (rel_off >> 8))
+                offset = (rel_off << 8) | (16 * (block_size - 3) + (rel_off >> 8))
+                #print('c2')
             des.append(offset & 0xff)
-            des.append(offset >> 8)
+            des.append(offset >> 8 & 0xff)
             p += block_size
             cmd_one = False
     des.append(0x80)
@@ -97,9 +106,30 @@ def encode(src) -> bytearray:
 
 
 def main():
-    b = b'\xff\xff\xff\xff\xff\xff\xff\xff'
-    c = encode(b)
-    print(c.hex())
+    import base64
+    with open('b','rb') as infile, open('c.txt','w') as outfile:
+        des = bytearray()
+        for i in range(32):
+            src = infile.read(8192)
+            sec = encode(src)
+            print(len(sec))
+            des.append(len(sec) & 0xff)
+            des.append(len(sec) >> 8)
+            des.append(8192 & 0xff)
+            des.append(8192 >> 8)
+            des += sec
+            if i == 4:
+                print(sec.hex())
+            print(i, 'done')
+        b64e = base64.b64encode(des).decode()
+        k = 0
+        outfile.write('[OverlayPack]\n')
+        while k*71 < len(b64e):
+            outfile.write(f'{k+1}={b64e[k*71:(k+1)*71]}\n')
+            k += 1
+        
+        
+
 
 if __name__ == '__main__':
     main()

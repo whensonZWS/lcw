@@ -1,6 +1,6 @@
 # LCW Compression
 
-LCW compression is a proprietary compression used in Westwood Studio's games. This repo's primary aim is to recreate the compression and decompression code in python. \
+LCW compression is a proprietary compression used in Westwood Studio's games. This repo's primary aim is to recreate the compression and decompression code in python. 
 
 ## About the algorithm:
 

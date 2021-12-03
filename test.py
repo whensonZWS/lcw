@@ -1,5 +1,2 @@
-b = bytearray()
-a = 0x6523
-b.append(a & 0xff)
-b.append(a >> 8)
-print(b.hex())
+p = [0,1,2,3,4,5,6]
+print(p[2:100])
